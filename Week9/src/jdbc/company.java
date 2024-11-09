@@ -97,6 +97,8 @@ public class company extends JFrame implements ActionListener {
 		searchPanel.add(salaryCB);
 		searchPanel.add(supervisorCB);
 		searchPanel.add(departmentCB);
+		searchPanel.add(nameText); 
+		searchPanel.add(ssnText); 
 		searchPanel.add(searchBtn); // 검색 버튼
 		searchPanel.add(deleteBtn); // 직원 삭제 버튼
 		searchPanel.add(addEmployeeBtn); // 직원 추가 버튼
@@ -151,6 +153,7 @@ public class company extends JFrame implements ActionListener {
 		// 버튼과 이벤트 처리 함수 연결
 		connBtn.addActionListener(this);
 		searchBtn.addActionListener(this);
+		deleteBtn.addActionListener(this);
 		addEmployeeBtn.addActionListener(e -> openAddEmployeeDialog());
 
 		//추가내용
@@ -331,7 +334,7 @@ public class company extends JFrame implements ActionListener {
 			if (selectedCount != 0) {
 				query += ",";
 			}
-			query += "(select CONCAT(Fname, ' ', Minit, ' ', Lname) from company.Employee where ssn = E.Super_ssn)";
+			query += "(select CONCAT(Fname, ' ', Minit, ' ', Lname) from Employee where ssn = E.Super_ssn)";
 			selectedCount += 1;
 			columnNames.add("SUPERVISOR");
 		}
@@ -340,12 +343,12 @@ public class company extends JFrame implements ActionListener {
 			if (selectedCount != 0) {
 				query += ",";
 			}
-			query += "(select Dname from company.department where Dnumber = E.Dno)";
+			query += "(select Dname from department where Dnumber = E.Dno)";
 			selectedCount += 1;
 			columnNames.add("DEPARTMENT");
 		}
 		
-		query += " from company.employee E";
+		query += " from employee E";
 		
 		if (selectedCount == 0) {
 			query = "";
@@ -437,21 +440,21 @@ public class company extends JFrame implements ActionListener {
 	    // 기본 쿼리의 FROM 및 JOIN 절 구성
 	    if ("부서".equals(selectedGroup)) {
 	        query.append("SELECT D.Dname AS `Group`, AVG(E.salary) AS AVG_Salary ")
-	             .append("FROM company.employee E ")
-	             .append("JOIN company.department D ON E.Dno = D.Dnumber ");
+	             .append("FROM employee E ")
+	             .append("JOIN department D ON E.Dno = D.Dnumber ");
 	    } else if ("상급자".equals(selectedGroup)) {
 	        query.append("SELECT CONCAT(S.Fname, ' ', S.Minit, ' ', S.Lname) AS `Group`, AVG(E.salary) AS AVG_Salary ")
-	             .append("FROM company.employee E ")
-	             .append("JOIN company.employee S ON E.Super_ssn = S.ssn ");
+	             .append("FROM employee E ")
+	             .append("JOIN employee S ON E.Super_ssn = S.ssn ");
 	    } else if ("성별".equals(selectedGroup)) {
 	        query.append("SELECT E.sex AS `Group`, AVG(E.salary) AS AVG_Salary ")
-	             .append("FROM company.employee E ");
+	             .append("FROM employee E ");
 	    }
 
 	    // 검색 범위 조건 추가
 	    String selectedCondition = (String) conditionComboBox.getSelectedItem();
 	    if ("부서".equals(selectedCondition)) {
-	        whereClause.append("E.Dno = (SELECT Dnumber FROM company.department WHERE Dname = '")
+	        whereClause.append("E.Dno = (SELECT Dnumber FROM department WHERE Dname = '")
 	                   .append(departmentComboBox.getSelectedItem())
 	                   .append("')");
 	    } else if ("성별".equals(selectedCondition)) {
@@ -577,7 +580,7 @@ public class company extends JFrame implements ActionListener {
 		addBtn.addActionListener(e -> {
 			// 데이터베이스에 새 직원 정보 삽입
 			try {
-				String query = "INSERT INTO company.Employee (Fname, Minit, Lname, Ssn, Bdate, Address, Sex, Salary, Super_ssn, Dno) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+				String query = "INSERT INTO Employee (Fname, Minit, Lname, Ssn, Bdate, Address, Sex, Salary, Super_ssn, Dno) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 				PreparedStatement pstmt = conn.prepareStatement(query);
 				pstmt.setString(1, firstNameField.getText());
 				pstmt.setString(2, middleInitField.getText());
