@@ -22,7 +22,7 @@ import javax.swing.table.DefaultTableModel;
 import java.sql.*;
 import java.util.*;
 
-public class company extends JFrame implements ActionListener {
+public class company_condition extends JFrame implements ActionListener {
 	
 	private Connection conn;
 	
@@ -65,7 +65,7 @@ public class company extends JFrame implements ActionListener {
 
 
 	
-	public company() {
+	public company_condition() {
 
 		// DB 연결 관련 코드
 		JPanel dbConnPanel = new JPanel();
@@ -421,7 +421,7 @@ public class company extends JFrame implements ActionListener {
 
 	
 	public static void main(String[] args) {
-		new company();
+		new company_condition();
 
 	}
 

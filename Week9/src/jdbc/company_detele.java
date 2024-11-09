@@ -22,7 +22,7 @@ import javax.swing.JOptionPane;
 import java.sql.*;
 import java.util.*;
 
-public class company extends JFrame implements ActionListener {
+public class company_detele extends JFrame implements ActionListener {
 	
 	private Connection conn;
 	
@@ -66,7 +66,7 @@ public class company extends JFrame implements ActionListener {
 
 	private ArrayList<String> columnNames = new ArrayList<String>();
 	
-	public company() {
+	public company_detele() {
 
 		// DB 연결 관련 코드
 		JPanel dbConnPanel = new JPanel();
@@ -339,7 +339,7 @@ public class company extends JFrame implements ActionListener {
 
 
 	public static void main(String[] args) {
-		new company();
+		new company_detele();
 
 	}
 
