@@ -47,7 +47,8 @@ public class company extends JFrame implements ActionListener {
 	
 	private JButton connBtn = new JButton("연결");
 	private JButton searchBtn = new JButton("검색");
-	
+	private JButton addEmployeeBtn = new JButton("직원 추가");
+
 	private JTable resultTable;
 	private DefaultTableModel resultModel;
 	private JScrollPane scrollPane;
@@ -80,7 +81,8 @@ public class company extends JFrame implements ActionListener {
 		searchPanel.add(supervisorCB);
 		searchPanel.add(departmentCB);
 		searchPanel.add(searchBtn);
-		
+		searchPanel.add(addEmployeeBtn);
+
 		// 결과창 관련 코드
 		JPanel resultPanel = new JPanel();
 		resultPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 10));
@@ -105,7 +107,8 @@ public class company extends JFrame implements ActionListener {
 		// 버튼과 이벤트 처리 함수 연결
 		connBtn.addActionListener(this);
 		searchBtn.addActionListener(this);
-		
+		addEmployeeBtn.addActionListener(e -> openAddEmployeeDialog());
+
 		setSize(1200, 800); // 창 크기 세팅
 		setLocationRelativeTo(null); // 창이 가운데 위치하도록
 		setTitle("103조 JDBC 프로젝트"); // 타이틀 세팅
@@ -258,7 +261,136 @@ public class company extends JFrame implements ActionListener {
 		
 		return query;
 	}
-	
+
+	private void openAddEmployeeDialog() {
+		JDialog addEmployeeDialog = new JDialog(this, "새로운 직원 정보 추가", true);
+		String[] genders = {"F", "M"};
+		JComboBox<String> sexComboBox = new JComboBox<>(genders);
+		addEmployeeDialog.setLayout(new GridBagLayout());
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.insets = new Insets(5, 5, 5, 5);
+
+		JTextField firstNameField = new JTextField(10);
+		JTextField middleInitField = new JTextField(1);
+		JTextField lastNameField = new JTextField(10);
+		JTextField ssnField = new JTextField(9);
+		JTextField birthdateField = new JTextField(10);
+		JTextField addressField = new JTextField(20);
+		JComboBox<String> sexField = sexComboBox;
+		JTextField salaryField = new JTextField(10);
+		JTextField superSsnField = new JTextField(9);
+		JTextField dnoField = new JTextField(2);
+		JButton addBtn = new JButton("정보 추가하기");
+
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		addEmployeeDialog.add(new JLabel("First Name:"), gbc);
+		gbc.gridx = 1;
+		addEmployeeDialog.add(firstNameField, gbc);
+
+		// Middle Init
+		gbc.gridx = 0;
+		gbc.gridy = 1;
+		addEmployeeDialog.add(new JLabel("Middle Init:"), gbc);
+		gbc.gridx = 1;
+		addEmployeeDialog.add(middleInitField, gbc);
+
+		// Last Name
+		gbc.gridx = 0;
+		gbc.gridy = 2;
+		addEmployeeDialog.add(new JLabel("Last Name:"), gbc);
+		gbc.gridx = 1;
+		addEmployeeDialog.add(lastNameField, gbc);
+
+		// SSN
+		gbc.gridx = 0;
+		gbc.gridy = 3;
+		addEmployeeDialog.add(new JLabel("SSN:"), gbc);
+		gbc.gridx = 1;
+		addEmployeeDialog.add(ssnField, gbc);
+
+		// Birthdate
+		gbc.gridx = 0;
+		gbc.gridy = 4;
+		addEmployeeDialog.add(new JLabel("Birthdate:"), gbc);
+		gbc.gridx = 1;
+		addEmployeeDialog.add(birthdateField, gbc);
+
+		// Address
+		gbc.gridx = 0;
+		gbc.gridy = 5;
+		addEmployeeDialog.add(new JLabel("Address:"), gbc);
+		gbc.gridx = 1;
+		addEmployeeDialog.add(addressField, gbc);
+
+		// Sex
+		gbc.gridx = 0;
+		gbc.gridy = 6;
+		addEmployeeDialog.add(new JLabel("Sex:"), gbc);
+		gbc.gridx = 1;
+		addEmployeeDialog.add(sexField, gbc);
+
+		// Salary
+		gbc.gridx = 0;
+		gbc.gridy = 7;
+		addEmployeeDialog.add(new JLabel("Salary:"), gbc);
+		gbc.gridx = 1;
+		addEmployeeDialog.add(salaryField, gbc);
+
+		// Super_ssn
+		gbc.gridx = 0;
+		gbc.gridy = 8;
+		addEmployeeDialog.add(new JLabel("Super_ssn:"), gbc);
+		gbc.gridx = 1;
+		addEmployeeDialog.add(superSsnField, gbc);
+
+		// Dno
+		gbc.gridx = 0;
+		gbc.gridy = 9;
+		addEmployeeDialog.add(new JLabel("Dno:"), gbc);
+		gbc.gridx = 1;
+		addEmployeeDialog.add(dnoField, gbc);
+
+		// 버튼은 하단 중앙에 배치
+		gbc.gridx = 0;
+		gbc.gridy = 10;
+		gbc.gridwidth = 2;  // 버튼이 두 열을 차지하도록 설정
+		gbc.anchor = GridBagConstraints.CENTER;  // 버튼을 중앙에 배치
+		addEmployeeDialog.add(addBtn, gbc);
+
+		addBtn.addActionListener(e -> {
+			// 데이터베이스에 새 직원 정보 삽입
+			try {
+				String query = "INSERT INTO company.Employee (Fname, Minit, Lname, Ssn, Bdate, Address, Sex, Salary, Super_ssn, Dno) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+				PreparedStatement pstmt = conn.prepareStatement(query);
+				pstmt.setString(1, firstNameField.getText());
+				pstmt.setString(2, middleInitField.getText());
+				pstmt.setString(3, lastNameField.getText());
+				pstmt.setString(4, ssnField.getText());
+				pstmt.setString(5, birthdateField.getText());
+				pstmt.setString(6, addressField.getText());
+				pstmt.setString(7, (String) sexField.getSelectedItem());
+				pstmt.setDouble(8, Double.parseDouble(salaryField.getText()));
+				pstmt.setString(9, superSsnField.getText());
+				pstmt.setInt(10, Integer.parseInt(dnoField.getText()));
+
+				int rows = pstmt.executeUpdate();
+				if (rows > 0) {
+					JOptionPane.showMessageDialog(this, "새 직원이 추가되었습니다.");
+					addEmployeeDialog.dispose();
+					searchBtn.doClick(); // 직원 추가 후 검색 버튼을 자동으로 눌러 목록 갱신
+				}
+			} catch (SQLException ex) {
+				ex.printStackTrace();
+				JOptionPane.showMessageDialog(this, "직원 추가 중 오류가 발생했습니다.");
+			}
+		});
+
+		addEmployeeDialog.pack();
+		addEmployeeDialog.setLocationRelativeTo(this);
+		addEmployeeDialog.setVisible(true);
+	}
 
 	public static void main(String[] args) {
 		new company();
