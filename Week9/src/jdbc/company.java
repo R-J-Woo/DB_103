@@ -22,6 +22,9 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 
 import java.sql.*;
@@ -35,6 +38,7 @@ public class company extends JFrame implements ActionListener {
 	private JLabel userLabel = new JLabel("user: ");
 	private JLabel pwdLabel = new JLabel("password: ");
 	private JLabel searchLabel = new JLabel("검색 항목: ");
+	private JLabel selectedEmpLabel = new JLabel("선택한 직원: ");
 	private JLabel empCountLabel = new JLabel("인원 수: ");
 	private JLabel empCount = new JLabel("0");
 	
@@ -64,6 +68,7 @@ public class company extends JFrame implements ActionListener {
 	private JScrollPane scrollPane;
 
 	private ArrayList<String> columnNames = new ArrayList<String>();
+	private ArrayList<String> selectedNameList = new ArrayList<String>();
 
 	//추가한 부분
 	private JComboBox<String> conditionComboBox = new JComboBox<>(new String[]{"전체", "부서", "성별", "연봉"});
@@ -72,6 +77,8 @@ public class company extends JFrame implements ActionListener {
 	private JTextField salaryTextField = new JTextField(10);
 	private JComboBox<String> groupConditionComboBox = new JComboBox<>(new String[]{"그룹 없음", "성별", "부서", "상급자"});
 
+	
+	
 	public company() {
 
 		// DB 연결 관련 코드
@@ -139,7 +146,7 @@ public class company extends JFrame implements ActionListener {
 		combinedConditionPanel.add(conditionPanel);
 		combinedConditionPanel.add(groupConditionPanel);
 		
-		// 하나의 큰 Top panel에 DB 연결, 검색, 결과창 panel을 집어넣음
+		// 하나의 큰 Top panel에 DB 연결, 검색, 조건 선택, 결과창 panel을 집어넣음
 		JPanel Top = new JPanel();
 		Top.setLayout(new BoxLayout(Top, BoxLayout.Y_AXIS));
 		Top.add(dbConnPanel);
@@ -147,7 +154,21 @@ public class company extends JFrame implements ActionListener {
 		Top.add(combinedConditionPanel);
 		Top.add(resultPanel);
 		
+		// 선택한 직원
+		JPanel selectedEmpPanel = new JPanel();
+		selectedEmpPanel.setLayout(new BoxLayout(selectedEmpPanel, BoxLayout.Y_AXIS));
+		selectedEmpLabel.setBorder(new EmptyBorder(10, 5, 10, 5));
+		empCountLabel.setBorder(new EmptyBorder(10, 5, 10, 5));
+		selectedEmpPanel.add(selectedEmpLabel);
+		selectedEmpPanel.add(empCountLabel);
+		
+		JPanel Middle = new JPanel();
+		Middle.setLayout(new BoxLayout(Middle, BoxLayout.Y_AXIS));
+		Middle.add(selectedEmpPanel);
+		
+		
 		add(Top, BorderLayout.NORTH);
+		add(Middle, BorderLayout.CENTER);
 		
 		
 		// 버튼과 이벤트 처리 함수 연결
@@ -237,34 +258,81 @@ public class company extends JFrame implements ActionListener {
 			    query = getConditionsQuery(); // where 조건 추가 검색
 			}
 			
+			// 평균 급여 그룹이 없으면 선택 column 생성, 그룹이 있으면 선택 column 생성하지 않음
+			if ("그룹 없음".equals(groupConditionComboBox.getSelectedItem())) {
+				resultModel = new DefaultTableModel(columnNames.toArray(), 0) {
+					@Override
+					public Class<?> getColumnClass(int columnIndex) {
+						if (columnIndex == 0) return Boolean.class;
+						return super.getColumnClass(columnIndex);
+					}
+				};
+				
+				resultModel.addTableModelListener(new TableModelListener() {
+					
+					@Override
+					public void tableChanged(TableModelEvent e) {
+						
+						if (e.getType() == TableModelEvent.UPDATE) {
+							int row = e.getFirstRow();
+							int col = e.getColumn();
+							
+							if (col == 0) {
+								Boolean isChecked = (Boolean) resultModel.getValueAt(row, col);
+								String name = (String) resultModel.getValueAt(row, 1);
+								if (isChecked) {
+									selectedNameList.add(name);	// 선택한 직원에 추가
+								} else {
+									selectedNameList.remove(name); // 선택한 직원에서 제거
+								}
+								
+								setSelectedEmp();
+								revalidate();
+								repaint();
+							}
+						}
+					}
+				});
+			} else {
+				resultModel = new DefaultTableModel(columnNames.toArray(), 0);
+			}
+			
 			if (query.length() > 0) {
 				try {
 					Statement stmt = conn.createStatement();
 					ResultSet rs = stmt.executeQuery(query);
 					int colCount = rs.getMetaData().getColumnCount(); // 열의 갯수 체크
-
-					resultModel = new DefaultTableModel(columnNames.toArray(), 0);
+					int rowCount = 0;
+					
 					while (rs.next()) {
 						ArrayList<Object> row = new ArrayList<>();
+						
+						if ("그룹 없음".equals(groupConditionComboBox.getSelectedItem())) {
+							row.add(false);
+						}
+						
 						for (int i = 1; i <= colCount; i++) {
 							row.add(rs.getObject(i));
 						}
 						
+						rowCount += 1;
 						resultModel.addRow(row.toArray());
 					}
 					
 					resultTable = new JTable(resultModel);
 					scrollPane.setViewportView(resultTable);
+					selectedEmpLabel.setText("선택한 직원: ");
+					empCountLabel.setText("인원 수: " + rowCount);
 					revalidate();
 					repaint();
 				}
 				catch (SQLException e1) {
 					e1.printStackTrace();
-					System.err.println("DB 검색 중 실패했습니다.");
+			        JOptionPane.showMessageDialog(null, "DB 검색 중 에러가 발생했습니다.");
 				}
 			}
 			else {
-				System.err.println("선택된 attribute가 없습니다.");
+		        JOptionPane.showMessageDialog(null, "선택한 항목이 없습니다.");
 			}
 		}
 
@@ -272,12 +340,21 @@ public class company extends JFrame implements ActionListener {
 	        deleteEmployee();
 	    }
 	}
+	
+	private void setSelectedEmp() {
+		selectedEmpLabel.setText("선택한 직원: ");
+		
+		for (String name: selectedNameList) {
+			selectedEmpLabel.setText(selectedEmpLabel.getText() + name + " ");
+		}
+	}
 
 	// 검색 쿼리 가져오는 함수
 	private String getQuery() {
 		int selectedCount = 0;
 		String query = "select ";
 		columnNames.clear();
+		columnNames.add("선택");
 		
 		if (nameCB.isSelected()) {
 			query += "CONCAT(Fname, ' ', Minit, ' ', Lname)";
