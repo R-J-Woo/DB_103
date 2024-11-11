@@ -67,7 +67,6 @@ public class company extends JFrame implements ActionListener {
 	private JScrollPane scrollPane;
 
 	private ArrayList<String> columnNames = new ArrayList<String>();
-	private ArrayList<String> selectedNameList = new ArrayList<String>();
 
 	// 추가한 부분
 	private JComboBox<String> conditionComboBox = new JComboBox<>(new String[] { "전체", "부서", "성별", "연봉" });
@@ -77,6 +76,22 @@ public class company extends JFrame implements ActionListener {
 	private JTextField salaryTextField = new JTextField(10);
 	private JComboBox<String> groupConditionComboBox = new JComboBox<>(new String[] { "그룹 없음", "성별", "부서", "상급자" });
 
+	// update 관련 변수
+	private JLabel updateLabel = new JLabel("수정: ");
+	private JComboBox<String> updateComboBox = new JComboBox<> (new String[] {"없음", "Name", "Ssn", "BDate", "Address", "Sex", "Salary", "Supervisor", "Department"});
+	private JButton updateBtn = new JButton("UPDATE");
+	private JTextField updateNameTextField = new JTextField(10);
+	private JTextField updateSsnTextField = new JTextField(10);
+	private JTextField updateBdateTextField = new JTextField(10);
+	private JTextField updateAddressTextField = new JTextField(10);
+	private JTextField updateSalaryTextField = new JTextField(10);
+	private JComboBox<String> updateSexComboBox = new JComboBox<>(new String[]{"M", "F"}); 
+	private JComboBox<String> updateSupervisorComboBox = new JComboBox<>(new String[]{});
+	private JComboBox<String> updateDepartmentComboBox = new JComboBox<>(new String[]{"Research", "Headquarters", "Administration"});
+
+	private ArrayList<String> selectedNameList = new ArrayList<String>();
+	private ArrayList<String> selectedSsnList = new ArrayList<String>();
+	
 	public company() {
 
 		// DB 연결 관련 코드
@@ -162,15 +177,87 @@ public class company extends JFrame implements ActionListener {
 		JPanel Middle = new JPanel();
 		Middle.setLayout(new BoxLayout(Middle, BoxLayout.Y_AXIS));
 		Middle.add(selectedEmpPanel);
+		
+		// 직원 수정
+		JPanel updatePanel = new JPanel();
+		updatePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 10));
+		updatePanel.add(updateLabel);
+		updatePanel.add(updateComboBox);
+		updatePanel.add(updateNameTextField);
+		updatePanel.add(updateSsnTextField);
+		updatePanel.add(updateBdateTextField);
+		updatePanel.add(updateAddressTextField);
+		updatePanel.add(updateSalaryTextField);
+		updatePanel.add(updateSexComboBox);
+		updatePanel.add(updateSupervisorComboBox);
+		updatePanel.add(updateDepartmentComboBox);
+		updatePanel.add(updateBtn);
+		
+		updateNameTextField.setVisible(false);
+		updateSsnTextField.setVisible(false);
+		updateBdateTextField.setVisible(false);
+		updateAddressTextField.setVisible(false);
+		updateSalaryTextField.setVisible(false);
+		updateSexComboBox.setVisible(false);
+		updateSupervisorComboBox.setVisible(false);
+		updateDepartmentComboBox.setVisible(false);
+		
+		JPanel Bottom = new JPanel();
+		Bottom.setLayout(new BoxLayout(Bottom, BoxLayout.Y_AXIS));
+		Bottom.add(updatePanel);
 
 		add(Top, BorderLayout.NORTH);
 		add(Middle, BorderLayout.CENTER);
+		add(Bottom, BorderLayout.SOUTH);
 
 		// 버튼과 이벤트 처리 함수 연결
 		connBtn.addActionListener(this);
 		searchBtn.addActionListener(this);
 		deleteBtn.addActionListener(this);
 		addEmployeeBtn.addActionListener(e -> openAddEmployeeDialog());
+		updateBtn.addActionListener(this);
+
+
+		updateComboBox.addActionListener(new ActionListener() {
+		    @Override
+		    public void actionPerformed(ActionEvent e) {
+		        String updateCondition = (String) updateComboBox.getSelectedItem();
+
+		        // 모든 입력 필드를 숨깁니다
+				updateNameTextField.setVisible(false);
+				updateSsnTextField.setVisible(false);
+				updateBdateTextField.setVisible(false);
+				updateAddressTextField.setVisible(false);
+				updateSalaryTextField.setVisible(false);
+				updateSexComboBox.setVisible(false);
+				updateSupervisorComboBox.setVisible(false);
+				updateDepartmentComboBox.setVisible(false);
+				
+		        // 선택된 조건에 따라 필드를 표시합니다
+		        if ("Name".equals(updateCondition)) {
+		        	updateNameTextField.setVisible(true);
+		        } else if ("Ssn".equals(updateCondition)) {
+		        	updateSsnTextField.setVisible(true);
+		        } else if ("BDate".equals(updateCondition)) {
+		        	updateBdateTextField.setVisible(true);
+		        } else if ("Address".equals(updateCondition)) {
+		        	updateAddressTextField.setVisible(true);
+		        } else if ("Sex".equals(updateCondition)) {
+		        	updateSexComboBox.setVisible(true);
+		        } else if ("Salary".equals(updateCondition)) {
+		        	updateSalaryTextField.setVisible(true);
+		        } else if ("Supervisor".equals(updateCondition)) {
+		        	setSupervisor();
+		        	updateSupervisorComboBox.setVisible(true);
+		        } else if ("Department".equals(updateCondition)) {
+		        	updateDepartmentComboBox.setVisible(true);
+		        }
+
+		        // 패널을 다시 그려서 변경 사항이 반영되도록 합니다
+		        updatePanel.revalidate();
+		        updatePanel.repaint();
+		    }
+		});
 
 		// 추가내용
 		conditionComboBox.addActionListener(new ActionListener() {
@@ -253,6 +340,9 @@ public class company extends JFrame implements ActionListener {
 
 		if (e.getSource() == searchBtn) { // 검색 버튼이 클릭되었을 때
 
+			selectedNameList.clear();
+			selectedSsnList.clear();
+			
 			String query = getQuery(); // select 하는 쿼리 가져오기
 
 			if (!"그룹 없음".equals(groupConditionComboBox.getSelectedItem())) {
@@ -296,10 +386,13 @@ public class company extends JFrame implements ActionListener {
 							if (col == 0) {
 								Boolean isChecked = (Boolean) resultModel.getValueAt(row, col);
 								String name = (String) resultModel.getValueAt(row, 1);
+								String ssn = (String) resultModel.getValueAt(row, 2);
 								if (isChecked) {
 									selectedNameList.add(name); // 선택한 직원에 추가
+									selectedSsnList.add(ssn);	// 선택한 직원에 추가
 								} else {
 									selectedNameList.remove(name); // 선택한 직원에서 제거
+									selectedSsnList.remove(ssn);	// 선택한 직원에서 제거
 								}
 
 								setSelectedEmp();
@@ -352,6 +445,12 @@ public class company extends JFrame implements ActionListener {
 
 		if (e.getSource() == deleteBtn) { // 삭제 버튼 클릭 시
 			deleteEmployee();
+			searchBtn.doClick(); // 검색 버튼을 자동으로 눌러 목록 갱신
+		}
+		
+		if (e.getSource() == updateBtn) { // update 버튼 클릭 시
+			updateEmployee();
+			searchBtn.doClick(); // 검색 버튼을 자동으로 눌러 목록 갱신
 		}
 	}
 
@@ -360,6 +459,21 @@ public class company extends JFrame implements ActionListener {
 
 		for (String name : selectedNameList) {
 			selectedEmpLabel.setText(selectedEmpLabel.getText() + name + " ");
+		}
+	}
+	
+	private void setSupervisor() {
+		try {
+			String query = "select CONCAT(Fname, ' ', Minit, ' ', Lname) from employee";
+			Statement stmt = conn.createStatement();
+			ResultSet rs = stmt.executeQuery(query);
+			
+			while (rs.next()) {
+				updateSupervisorComboBox.addItem(rs.getObject(1) + "");
+			}
+			
+		} catch (SQLException e1) {
+			e1.printStackTrace();
 		}
 	}
 
@@ -448,6 +562,30 @@ public class company extends JFrame implements ActionListener {
 		return query;
 	}
 
+	private void updateEmployee() {
+		
+		String updateQuery = getUpdateQuery();
+		
+		if (updateQuery.length() > 0) {
+			try {
+				Statement stmt = conn.createStatement();
+				int updatedRowCount = stmt.executeUpdate(updateQuery);
+	            if (updatedRowCount > 0) {
+	                System.out.println("업데이트 완료!");
+	                JOptionPane.showMessageDialog(null, "선택된 직원들이 업데이트 되었습니다.");
+	            } else {
+	                JOptionPane.showMessageDialog(null, "업데이트된 직원이 없습니다.");
+	            }
+			}
+			catch (SQLException e1) {
+				e1.printStackTrace();
+		        JOptionPane.showMessageDialog(null, "DB 업데이트 중 에러가 발생했습니다.");
+			}
+		} else {
+	        JOptionPane.showMessageDialog(null, "선택한 직원이 없습니다.");
+		}
+	}
+	
 	private void deleteEmployee() {
 		// 사용자가 선택한 조건을 기반으로 DELETE 쿼리 생성
 		String query = getDeleteQuery();
@@ -471,6 +609,71 @@ public class company extends JFrame implements ActionListener {
 		}
 	}
 
+	private String getUpdateQuery() {
+		String query = "update employee set ";
+
+        String updateCondition = (String) updateComboBox.getSelectedItem();
+        
+        // set 절
+        if ("Name".equals(updateCondition)) {
+        	query += "name = " + updateNameTextField.getText().toString();
+        } else if ("Ssn".equals(updateCondition)) {
+        	query += "ssn = " + updateSsnTextField.getText().toString();
+        } else if ("BDate".equals(updateCondition)) {
+        	query += "Bdate = '" + updateBdateTextField.getText().toString() + "'";
+        } else if ("Address".equals(updateCondition)) {
+        	query += "Address = '" + updateAddressTextField.getText().toString() + "'";
+        } else if ("Sex".equals(updateCondition)) {
+        	query += "Sex = '" + updateSexComboBox.getSelectedItem().toString() + "'";
+        } else if ("Salary".equals(updateCondition)) {
+        	query += "Salary = " + updateSalaryTextField.getText().toString();
+        } else if ("Supervisor".equals(updateCondition)) {
+        	String superVisorSsn = getSupervisorSsn(updateSupervisorComboBox.getSelectedItem().toString());
+        	query += "Super_ssn = " + superVisorSsn;
+        } else if ("Department".equals(updateCondition)) {
+        	query += "Dno = (select Dnumber from department where Dname = '" + updateDepartmentComboBox.getSelectedItem() + "')";
+        }
+        
+        // where 절
+        query += " where ssn in (";
+        
+        for (int i = 0; i < selectedSsnList.size(); i++) {
+        	query += selectedSsnList.get(i);
+        	if (i < selectedSsnList.size() - 1) {
+        		query += ", ";
+        	}
+        }
+        
+        query += ")";
+        
+        if (selectedSsnList.size() == 0) {
+        	query = "";
+        }
+        
+        System.out.println("업데이트 쿼리: " + query);
+		
+		return query;
+	}
+
+	private String getSupervisorSsn(String superVisorName) {
+
+		String superVisorSsn = "";
+		
+		try {
+			String query = "select ssn from employee where CONCAT(Fname, ' ', Minit, ' ', Lname) = '" + superVisorName + "'";
+			Statement stmt = conn.createStatement();
+			ResultSet rs = stmt.executeQuery(query);
+
+			while (rs.next()) {
+				superVisorSsn = rs.getObject(1) + "";
+			}
+			
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+		}
+		
+		return superVisorSsn;
+	}
 	// DELETE 쿼리 생성
 	private String getDeleteQuery() {
 		int selectedCount = 0;
