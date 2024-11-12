@@ -616,7 +616,14 @@ public class company extends JFrame implements ActionListener {
         
         // set 절
         if ("Name".equals(updateCondition)) {
-        	query += "name = " + updateNameTextField.getText().toString();
+        	String[] name = updateNameTextField.getText().split(" ");
+        	String fname = name[0];
+        	String minit = name[1];
+        	String lname = name[2];
+        	query += "fname = '" + fname + "'";
+        	query += ", Minit = '" + minit + "'";
+        	query += ", Lname = '" + lname + "'";
+        	
         } else if ("Ssn".equals(updateCondition)) {
         	query += "ssn = " + updateSsnTextField.getText().toString();
         } else if ("BDate".equals(updateCondition)) {
@@ -651,8 +658,6 @@ public class company extends JFrame implements ActionListener {
         if (selectedSsnList.size() == 0) {
         	query = "";
         }
-        
-        System.out.println("업데이트 쿼리: " + query);
 		
 		return query;
 	}
