@@ -634,6 +634,8 @@ public class company extends JFrame implements ActionListener {
         	query += "Dno = (select Dnumber from department where Dname = '" + updateDepartmentComboBox.getSelectedItem() + "')";
         }
         
+        query += ", modified = CURRENT_TIMESTAMP()";
+        
         // where 절
         query += " where ssn in (";
         
@@ -868,7 +870,7 @@ public class company extends JFrame implements ActionListener {
 		addBtn.addActionListener(e -> {
 			// 데이터베이스에 새 직원 정보 삽입
 			try {
-				String query = "INSERT INTO Employee (Fname, Minit, Lname, Ssn, Bdate, Address, Sex, Salary, Super_ssn, Dno) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+				String query = "INSERT INTO Employee (Fname, Minit, Lname, Ssn, Bdate, Address, Sex, Salary, Super_ssn, Dno, created, modified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP())";
 				PreparedStatement pstmt = conn.prepareStatement(query);
 				pstmt.setString(1, firstNameField.getText());
 				pstmt.setString(2, middleInitField.getText());
