@@ -68,7 +68,7 @@ public class company extends JFrame implements ActionListener {
 
 	private ArrayList<String> columnNames = new ArrayList<String>();
 
-	// 추가한 부분
+	//조건 검색 관련 변수
 	private JComboBox<String> conditionComboBox = new JComboBox<>(new String[] { "전체", "부서", "성별", "연봉" });
 	private JComboBox<String> departmentComboBox = new JComboBox<>(
 			new String[] { "Research", "Headquarters", "Administration" });
@@ -133,7 +133,7 @@ public class company extends JFrame implements ActionListener {
 
 		resultPanel.add(scrollPane);
 
-		// 추가된 내용
+		
 		JPanel conditionPanel = new JPanel();
 		conditionPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 10));
 		conditionPanel.add(new JLabel("검색 범위:"));
@@ -147,7 +147,7 @@ public class company extends JFrame implements ActionListener {
 		sexComboBox.setVisible(false);
 		salaryTextField.setVisible(false);
 
-		// 그룹별 평균 월급 조건 UI 패널 설정
+		// 그룹별 평균 월급 조건 패널 설정
 		JPanel groupConditionPanel = new JPanel();
 		groupConditionPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 10));
 		groupConditionPanel.add(new JLabel("그룹별 평균 월급:"));
@@ -259,18 +259,18 @@ public class company extends JFrame implements ActionListener {
 		    }
 		});
 
-		// 추가내용
+		
 		conditionComboBox.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String selectedCondition = (String) conditionComboBox.getSelectedItem();
 
-				// 모든 입력 필드를 숨깁니다
+				// 모든 입력 필드를 숨김
 				departmentComboBox.setVisible(false);
 				sexComboBox.setVisible(false);
 				salaryTextField.setVisible(false);
 
-				// 선택된 조건에 따라 필드를 표시합니다
+				// 선택된 조건에 따라 필드를 표시
 				if ("부서".equals(selectedCondition)) {
 					departmentComboBox.setVisible(true);
 				} else if ("성별".equals(selectedCondition)) {
@@ -279,7 +279,7 @@ public class company extends JFrame implements ActionListener {
 					salaryTextField.setVisible(true);
 				}
 
-				// 패널을 다시 그려서 변경 사항이 반영되도록 합니다
+				// 패널을 다시 그려서 변경 사항이 반영
 				conditionPanel.revalidate();
 				conditionPanel.repaint();
 			}
@@ -317,13 +317,16 @@ public class company extends JFrame implements ActionListener {
 				boolean canDelete = false;
 
 				while (rs.next()) {
-					String grant = rs.getString(1);
-					if (grant.contains("INSERT")) {
-						canInsert = true;
-					}
-					if (grant.contains("DELETE")) {
-						canDelete = true;
-					}
+				    String grant = rs.getString(1);
+				    String safeGrant = grant.split(" ON ")[0]; // grant 문자열에서 ON 이전 부분만 추출 -> 
+				    					       //보안 문제(유저명이 DELETE 거나 INSERT면 권한이 없어도 기능 사용 가능
+
+				    if (safeGrant.contains("INSERT")) {
+				        canInsert = true;
+				    }
+				    if (safeGrant.contains("DELETE")) {
+				        canDelete = true;
+				    }
 				}
 
 				// 권한에 따라 버튼 활성화
@@ -710,7 +713,7 @@ public class company extends JFrame implements ActionListener {
 
 		return query; // 완성된 DELETE 쿼리 반환
 	}
-
+	//검색 범위 쿼리 생성
 	private String getConditionsQuery() {
 		String query = getQuery();
 		String condition = "";
@@ -731,7 +734,7 @@ public class company extends JFrame implements ActionListener {
 
 		return query;
 	}
-
+	//그룹별 평균 월급 쿼리 생성
 	private String getGroupQuery() {
 		String selectedGroup = (String) groupConditionComboBox.getSelectedItem();
 		String query = "";
@@ -747,7 +750,7 @@ public class company extends JFrame implements ActionListener {
 			query = "SELECT E.sex, AVG(E.salary) FROM employee E ";
 		}
 
-		// 검색 범위 조건 추가(condition이 따로 있으면)
+		// 검색 범위 조건 추가(검색 범위 조건이 있으면)
 		String selectedCondition = (String) conditionComboBox.getSelectedItem();
 		if ("부서".equals(selectedCondition)) {
 			whereClause = "E.Dno = (SELECT Dnumber FROM department WHERE Dname = '"
