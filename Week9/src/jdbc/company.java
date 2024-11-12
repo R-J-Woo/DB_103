@@ -596,7 +596,7 @@ public class company extends JFrame implements ActionListener {
 				int rowsAffected = stmt.executeUpdate(query); // DELETE 쿼리 실행
 				if (rowsAffected > 0) {
 					System.out.println("삭제 완료!");
-					JOptionPane.showMessageDialog(null, "선택된 직원들이 삭제되었습니다.");
+					JOptionPane.showMessageDialog(null, "입력한 직원이 삭제되었습니다.");
 				} else {
 					JOptionPane.showMessageDialog(null, "삭제할 직원이 없습니다.");
 				}
